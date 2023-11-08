@@ -18,14 +18,11 @@
     </p>
     <p v-else-if="gameStore.isTurnToPlay" class="turn-to-play-label">It's your turn to play!</p>
     <p v-else class="turn-to-play-label">It's your opponent's turn<DotAnimation /></p>
-    <div v-if="roomStore.isHost && gameStore.gameResult !== undefined" class="end-game-actions">
+    <div v-if="roomStore.isHost" class="end-game-actions">
       <MyButton @click="backToLobby">Back to Lobby</MyButton>
       <MyButton @click="playAgain">Play again</MyButton>
     </div>
-    <p
-      v-else-if="!roomStore.isHost && gameStore.gameResult !== undefined"
-      class="end-game-guest-label"
-    >
+    <p v-if="!roomStore.isHost && gameStore.gameResult !== undefined" class="end-game-guest-label">
       Waiting for host<DotAnimation />
     </p>
   </div>
