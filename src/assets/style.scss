@@ -1,0 +1,105 @@
+@use './fonts/AdLaMDisplay-Regular.scss';
+
+* {
+  font-family:
+    'ADLaM Display',
+    -apple-system,
+    blinkmacsystemfont,
+    'Segoe UI',
+    roboto,
+    oxygen,
+    ubuntu,
+    cantarell,
+    'Open Sans',
+    'Helvetica Neue',
+    sans-serif;
+}
+
+html {
+  // Light theme
+  --input-background-color: #fff;
+  --input-text-color: #212121;
+  --input-hover-color: #f3f3f3;
+  --input-hover-text-color: #212121;
+  --input-hover-icon-color: #959595;
+  --input-primary-color: #1976d2;
+  --input-primary-disabled-color: #6bacea;
+  --input-primary-text-color: #f8f5f5;
+  --input-secondary-color: #c0c4cc;
+  --input-border-color: #ddd;
+  --input-menu-border-color: #ddd;
+  --input-border-color-hover: #aaaeb7;
+  --input-disabled-color: #f6f6f6;
+  --input-scroll-bar-background: #f3f3f3;
+  --input-scroll-bar-color: #959595;
+  --input-success-color: #76d275;
+  --input-success-color-disabled: #a3d9b1;
+  --input-icon-color: #959595;
+  --input-danger-color: #ff6f60;
+  --input-marker-color: #ff6f60;
+  --input-tooltip-color: #fafafa;
+  --input-disabled-color-text: #8e8e8e;
+  --input-highlight-color: rgb(25 118 210 / 10%);
+
+  --input-input-padding: 6px 30px 6px 12px;
+  --input-font-size: 1rem;
+  --input-border-radius: 4px;
+  --input-font-family: 'ADLaM Display', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto,
+    oxygen, ubuntu, cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+// html.dark {
+//   // Dark theme
+// }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  min-height: 100dvh;
+  min-width: 100dvw;
+  background-color: #f0ead6;
+}
+
+.blue {
+  color: #3a64ee !important;
+}
+
+.red {
+  color: #ee3a55 !important;
+}
+
+.o::after {
+  @extend .red;
+  content: 'O';
+}
+.x::after {
+  @extend .blue;
+  content: 'X';
+}
+.w {
+  position: relative;
+  box-sizing: border-box;
+}
+.w::before {
+  content: ' ';
+  display: block;
+  position: absolute;
+  top: calc(50% - 1px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #000;
+}
