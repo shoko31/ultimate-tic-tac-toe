@@ -4,9 +4,7 @@
     <span v-else-if="isOPlay" class="icon o"></span>
     <span v-else-if="isXPlay" class="icon x"></span>
     <template v-if="message.origin === 'LOCAL' || message.origin === 'NETWORK'"
-      ><span :class="`${gameStore.playerSymbol === 'o' ? 'red' : 'blue'}`">{{
-        isMyMessage ? 'Me' : 'Guest'
-      }}</span
+      ><span :class="messageUserColorClass">{{ isMyMessage ? 'Me' : 'Guest' }}</span
       >: </template
     >{{ message.text }}
   </div>
@@ -54,6 +52,12 @@ const classes = computed(() => {
   if (icon.value || isOPlay.value || isXPlay.value) classList.push('game-chat-message--with-icon')
 
   return classList.join(' ')
+})
+
+const messageUserColorClass = computed(() => {
+  const symbol =
+    message.value.origin === 'LOCAL' ? gameStore.playerSymbol : gameStore.opponentSymbol
+  return symbol === 'o' ? 'red' : 'blue'
 })
 </script>
 
