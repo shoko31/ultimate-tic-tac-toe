@@ -79,11 +79,6 @@ export const useGameStore = defineStore('game', () => {
         Array.from({ length: 9 }, () => undefined)
       ) as UltimateTicTacToeBoard
     }
-    console.log(
-      'GB',
-      gameBoard.value,
-      gameBoard.value.findIndex((v) => v === undefined)
-    )
     chatMessages.push({ origin: 'SYSTEM', type: 'info', text: 'Game started!' })
   }
 
