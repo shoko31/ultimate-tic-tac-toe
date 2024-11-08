@@ -1,10 +1,7 @@
 <template>
   <ul class="game-mode-select" :class="{ disabled: _disabled }">
-    <li
-      class="game-mode-option game-mode-option--regular"
-      :class="{ selected: game.gameMode === 'regular' }"
-      @click="changeGamemode('regular')"
-    >
+    <li class="game-mode-option game-mode-option--regular" :class="{ selected: game.gameMode === 'regular' }"
+      @click="changeGamemode('regular')">
       <div class="grid">
         <div class="row">
           <div class="col x"></div>
@@ -24,11 +21,8 @@
       </div>
       <span class="game-mode-option--label">Regular</span>
     </li>
-    <li
-      class="game-mode-option game-mode-option--ultimate disabled"
-      :class="{ selected: game.gameMode === 'ultimate' }"
-      @click="false && changeGamemode('ultimate')"
-    >
+    <li class="game-mode-option game-mode-option--ultimate" :class="{ selected: game.gameMode === 'ultimate' }"
+      @click="changeGamemode('ultimate')">
       <div class="grid">
         <div class="row" v-for="r in 3" :key="r">
           <div class="col" v-for="i in 3" :key="i">
@@ -115,16 +109,18 @@ const changeGamemode = (gm: GameMode) => {
 
     &--ultimate {
       font-size: 6px;
+
       .grid {
         padding: 2px;
       }
 
-      & > .grid {
+      &>.grid {
         padding: 1px;
 
-        & > .row {
+        &>.row {
           border-bottom-width: 1.5px;
-          & > .col {
+
+          &>.col {
             border-right-width: 1.5px;
           }
         }
@@ -164,6 +160,7 @@ const changeGamemode = (gm: GameMode) => {
   flex-shrink: 1;
   flex-basis: 0;
 }
+
 .row {
   width: 100%;
   height: 100%;

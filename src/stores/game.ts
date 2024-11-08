@@ -51,6 +51,59 @@ export function isUltimateTicTacToeBoard(obj: Board | undefined): obj is Ultimat
   return Array.isArray(obj[0])
 }
 
+export function checkTicTacToeBoardState(
+  obj: TicTacToeBoard | undefined
+): 'o' | 'x' | 'DRAW' | undefined {
+  if (obj === undefined) return undefined
+  // Check for both diagonals
+  if (
+    (obj[0] !== undefined && obj[0] === obj[4] && obj[0] === obj[8]) ||
+    (obj[2] !== undefined && obj[2] === obj[4] && obj[2] === obj[6])
+  )
+    return obj[4] // Use index 4 because center is common
+  for (let i = 0; i < 3; i++) {
+    // Check for lines
+    if (
+      obj[i * 3 + 0] !== undefined &&
+      obj[i * 3 + 0] === obj[i * 3 + 1] &&
+      obj[i * 3 + 0] === obj[i * 3 + 2]
+    ) {
+      return obj[i * 3 + 0]
+    }
+    // Check for columns
+    if (obj[i + 0] !== undefined && obj[i + 0] === obj[i + 3] && obj[i + 0] === obj[i + 6]) {
+      return obj[i + 0]
+    }
+  }
+  if (obj.findIndex((v) => v === undefined) === -1) return 'DRAW'
+  return undefined
+}
+
+export function checkUltimateTicTacToeBoardState(
+  obj: UltimateTicTacToeBoard | undefined
+): 'o' | 'x' | 'DRAW' | undefined {
+  if (obj === undefined) return undefined
+
+  // Generate Tic Tac Toe board for each sub-boards
+  const results: TicTacToeBoard = Array.from({ length: 9 }, () => undefined) as TicTacToeBoard
+  let amountOfUndefinedResults = 0
+  for (let i = 0; i < 9; i++) {
+    const r = checkTicTacToeBoardState(obj[i])
+    results[i] = r === 'DRAW' ? undefined : r
+    if (r === undefined) amountOfUndefinedResults++
+  }
+
+  console.log(results)
+
+  // Check for Tic Tac Toe regular result
+  const result = checkTicTacToeBoardState(results)
+  if (result === undefined) {
+    if (amountOfUndefinedResults === 0) return 'DRAW'
+  }
+
+  return result
+}
+
 export const useGameStore = defineStore('game', () => {
   const playerSymbol = ref<'o' | 'x'>('o') // o is always starting
   const opponentSymbol = computed<typeof playerSymbol.value>(() =>
@@ -58,6 +111,7 @@ export const useGameStore = defineStore('game', () => {
   )
   const gameMode = ref<GameMode>('regular')
   const gameBoard = ref<TicTacToeBoard | UltimateTicTacToeBoard | undefined>()
+  const lastPlayedIndex = ref<number>()
 
   const isTurnToPlay = computed(() => {
     if (gameBoard.value === undefined) return false
@@ -79,6 +133,7 @@ export const useGameStore = defineStore('game', () => {
         Array.from({ length: 9 }, () => undefined)
       ) as UltimateTicTacToeBoard
     }
+    lastPlayedIndex.value = undefined
     chatMessages.push({ origin: 'SYSTEM', type: 'info', text: 'Game started!' })
   }
 
@@ -99,6 +154,7 @@ export const useGameStore = defineStore('game', () => {
     let text = ''
     if (gameMode.value === 'regular' && isTicTacToeBoard(gameBoard.value)) {
       gameBoard.value[index] = symbol
+      lastPlayedIndex.value = index
       text = `${symbol === playerSymbol.value ? 'You' : 'Your opponent'} played ${indexToText(
         index
       )}`
@@ -106,6 +162,10 @@ export const useGameStore = defineStore('game', () => {
       const outerIndex = Math.floor(index / 9)
       const innerIndex = index - outerIndex * 9
       gameBoard.value[outerIndex][innerIndex] = symbol
+      lastPlayedIndex.value = index
+      text = `${symbol === playerSymbol.value ? 'You' : 'Your opponent'} played ${indexToText(
+        outerIndex
+      )} ${indexToText(innerIndex)}`
     }
     chatMessages.push({
       origin: 'SYSTEM',
@@ -115,38 +175,16 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // Win condition
-  const gameResult = computed(() => {
+  const gameResult = computed<'DRAW' | 'WIN' | 'LOST' | undefined>(() => {
     if (gameBoard.value === undefined) return undefined
     if (isTicTacToeBoard(gameBoard.value)) {
-      // Check for both diagonals
-      if (
-        (gameBoard.value[0] !== undefined &&
-          gameBoard.value[0] === gameBoard.value[4] &&
-          gameBoard.value[0] === gameBoard.value[8]) ||
-        (gameBoard.value[2] !== undefined &&
-          gameBoard.value[2] === gameBoard.value[4] &&
-          gameBoard.value[2] === gameBoard.value[6])
-      )
-        return gameBoard.value[4] === playerSymbol.value ? 'WIN' : 'LOST' // Use index 4 because center is common
-      for (let i = 0; i < 3; i++) {
-        // Check for lines
-        if (
-          gameBoard.value[i * 3 + 0] !== undefined &&
-          gameBoard.value[i * 3 + 0] === gameBoard.value[i * 3 + 1] &&
-          gameBoard.value[i * 3 + 0] === gameBoard.value[i * 3 + 2]
-        ) {
-          return gameBoard.value[i * 3 + 0] === playerSymbol.value ? 'WIN' : 'LOST'
-        }
-        // Check for columns
-        if (
-          gameBoard.value[i + 0] !== undefined &&
-          gameBoard.value[i + 0] === gameBoard.value[i + 3] &&
-          gameBoard.value[i + 0] === gameBoard.value[i + 6]
-        ) {
-          return gameBoard.value[i + 0] === playerSymbol.value ? 'WIN' : 'LOST'
-        }
-      }
-      if (gameBoard.value.findIndex((v) => v === undefined) === -1) return 'DRAW'
+      const result = checkTicTacToeBoardState(gameBoard.value)
+      if (result === 'DRAW') return 'DRAW'
+      if (result !== undefined) return result === playerSymbol.value ? 'WIN' : 'LOST'
+    } else if (isUltimateTicTacToeBoard(gameBoard.value)) {
+      const result = checkUltimateTicTacToeBoardState(gameBoard.value)
+      if (result === 'DRAW') return 'DRAW'
+      if (result !== undefined) return result === playerSymbol.value ? 'WIN' : 'LOST'
     }
     return undefined
   })
@@ -161,6 +199,7 @@ export const useGameStore = defineStore('game', () => {
     chatMessages,
     createBoard,
     playAt,
-    gameResult
+    gameResult,
+    lastPlayedIndex
   }
 })

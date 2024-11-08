@@ -23,5 +23,8 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     TicTacToeBoard: typeof import('./src/components/GameBoard/TicTacToe/TicTacToeBoard.vue')['default']
     TicTacToeSquare: typeof import('./src/components/GameBoard/TicTacToe/TicTacToeSquare.vue')['default']
+    UltimateTicTacToeBoard: typeof import('./src/components/GameBoard/UltimateTicTacToeBoard/UltimateTicTacToeBoard.vue')['default']
+    UltimateTicTacToeInnerSquare: typeof import('./src/components/GameBoard/UltimateTicTacToeBoard/UltimateTicTacToeInnerSquare.vue')['default']
+    UltimateTicTacToeSquare: typeof import('./src/components/GameBoard/UltimateTicTacToeBoard/UltimateTicTacToeSquare.vue')['default']
   }
 }

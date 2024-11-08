@@ -1,29 +1,31 @@
 <template>
   <div class="game-board">
     <p class="player-symbol-label">You are <span :class="`${gameStore.playerSymbol}`"></span></p>
-    <TicTacToeBoard />
-    <div
-      v-if="gameResultLabel"
-      class="result-label"
-      :class="{
-        win: gameStore.gameResult === 'WIN',
-        lost: gameStore.gameResult === 'LOST',
-        draw: gameStore.gameResult === 'DRAW'
-      }"
-    >
+    <UltimateTicTacToeBoard v-if="gameStore.gameMode === 'ultimate'" />
+    <TicTacToeBoard v-else-if="gameStore.gameMode === 'regular'" />
+    <div v-else>Invalid game mode</div>
+    <div v-if="gameResultLabel" class="result-label" :class="{
+      win: gameStore.gameResult === 'WIN',
+      lost: gameStore.gameResult === 'LOST',
+      draw: gameStore.gameResult === 'DRAW'
+    }">
       {{ gameResultLabel }}
     </div>
     <p v-else-if="!canPlay" class="waiting-opponent-label">
-      Waiting for your opponent<DotAnimation />
+      Waiting for your opponent
+      <DotAnimation />
     </p>
     <p v-else-if="gameStore.isTurnToPlay" class="turn-to-play-label">It's your turn to play!</p>
-    <p v-else class="turn-to-play-label">It's your opponent's turn<DotAnimation /></p>
+    <p v-else class="turn-to-play-label">It's your opponent's turn
+      <DotAnimation />
+    </p>
     <div v-if="roomStore.isHost" class="end-game-actions">
       <MyButton @click="backToLobby">Back to Lobby</MyButton>
       <MyButton @click="playAgain">Play again</MyButton>
     </div>
     <p v-if="!roomStore.isHost && gameStore.gameResult !== undefined" class="end-game-guest-label">
-      Waiting for host<DotAnimation />
+      Waiting for host
+      <DotAnimation />
     </p>
   </div>
 </template>
@@ -93,6 +95,7 @@ const backToLobby = () => {
     &.win {
       color: #178614;
     }
+
     &.lost {
       color: #861414;
     }
