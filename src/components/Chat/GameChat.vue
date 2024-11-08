@@ -1,13 +1,11 @@
 <template>
   <div class="game-chat">
-    <div class="game-messages">
+    <div class="game-messages" ref="gameMessagesDiv">
       <transition-group name="fade">
-        <ChatMessage
-          v-for="(msg, i) of gameStore.chatMessages"
-          :key="i"
-          :message="msg"
-        ></ChatMessage>
+        <ChatMessage v-for="(msg, i) of gameStore.chatMessages" :key="i" :message="msg"></ChatMessage>
       </transition-group>
+      <div v-if="newMessageIndex !== undefined" class="new-messages" @click="scrollToNewMessage">New messages, click to
+        scroll</div>
     </div>
     <div class="chat-input">
       <MyInput @keypress.enter="sendChatMessage" v-model="chatInputText" />
@@ -26,12 +24,40 @@ const gameStore = useGameStore()
 const roomStore = useRoomStore()
 
 const chatInputText = ref('')
+const gameMessagesDiv = ref<undefined | null | HTMLDivElement>();
+
+const newMessageIndex = ref<undefined | number>(undefined)
 
 const sendChatMessage = async () => {
   if (!chatInputText.value) return
   roomStore.sendMessage(chatInputText.value)
   chatInputText.value = ''
 }
+
+const scrollToNewMessage = () => {
+  if (!gameMessagesDiv.value) return;
+  if (newMessageIndex.value === undefined) return;
+  console.log(gameMessagesDiv.value.children.length, newMessageIndex.value, gameMessagesDiv.value.children.item(newMessageIndex.value))
+  if (gameMessagesDiv.value.children.length - 1 > newMessageIndex.value) {
+    gameMessagesDiv.value.children.item(newMessageIndex.value)?.scrollIntoView({ behavior: 'smooth' });
+  }
+  newMessageIndex.value = undefined;
+}
+
+watchArray(gameStore.chatMessages, () => {
+  if (!gameMessagesDiv.value) return;
+  if (gameMessagesDiv.value.clientHeight + gameMessagesDiv.value.scrollTop >= gameMessagesDiv.value.scrollHeight) {
+    newMessageIndex.value = undefined;
+    // Auto scroll
+    nextTick(() => {
+      if (!gameMessagesDiv.value) return;
+      gameMessagesDiv.value.children.item(gameMessagesDiv.value.children.length - 1)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  } else if (newMessageIndex.value === undefined) {
+    // Prepare to scroll to newly added message
+    newMessageIndex.value = gameStore.chatMessages.length - 1;
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -52,6 +78,19 @@ $chat-input-height: 52px;
     overflow-x: hidden;
     padding: 5px;
     box-sizing: border-box;
+
+    .new-messages {
+      cursor: pointer;
+      position: absolute;
+      bottom: 52px;
+      left: 0;
+      right: 0;
+      padding: 5px;
+      background-color: #000C;
+      color: #E3E3E3;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+    }
   }
 
   .chat-input {
@@ -77,6 +116,7 @@ $chat-input-height: 52px;
     position: relative;
     border-radius: 10px;
   }
+
   .send-icon {
     height: 1rem;
     width: 1rem;
