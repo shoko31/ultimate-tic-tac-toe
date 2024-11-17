@@ -137,6 +137,17 @@ export const useGameStore = defineStore('game', () => {
     chatMessages.push({ origin: 'SYSTEM', type: 'info', text: 'Game started!' })
   }
 
+  function loadBoardFromRecovery(board: Board, _lastPlayedIndex: number | undefined) {
+    lastPlayedIndex.value = _lastPlayedIndex
+    if (isTicTacToeBoard(board)) {
+      gameBoard.value = board.map((b) => (b === null ? undefined : b)) as TicTacToeBoard
+    } else if (isUltimateTicTacToeBoard(board)) {
+      gameBoard.value = board.map((b) =>
+        b.map((c) => (c === null ? undefined : c))
+      ) as UltimateTicTacToeBoard
+    }
+  }
+
   function indexToText(index: number): string {
     function subStr(u: number, vert: boolean) {
       if (u === 0) return vert ? 'top' : 'left'
@@ -198,6 +209,7 @@ export const useGameStore = defineStore('game', () => {
     started,
     chatMessages,
     createBoard,
+    loadBoardFromRecovery,
     playAt,
     gameResult,
     lastPlayedIndex

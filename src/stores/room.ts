@@ -1,18 +1,19 @@
 import { ref, computed, readonly } from 'vue'
 import { defineStore } from 'pinia'
 import { GameClient, type GameClientMessage } from '@/shared/GameClient'
-import { useGameStore } from './game'
+import { useGameStore, type Board } from './game'
 import { SeededRandom } from '@/shared/SeededRandom'
 
-const client = GameClient.instance
-
 export const useRoomStore = defineStore('room', () => {
+  const client = GameClient.instance
+
   // State
   const id = ref<string | undefined>(undefined)
   const isReady = ref(client.ready)
   const gameJoined = ref(client.gameJoined)
   const isInRoom = computed(() => id.value !== undefined)
   const networkError = ref(client.networkError)
+  const tryToRecoverHost = ref(false)
   let randomNumberGenerator: undefined | SeededRandom = undefined
 
   const isHost = ref(false)
@@ -120,6 +121,9 @@ export const useRoomStore = defineStore('room', () => {
         type: 'GameClientChangeOptionsMessage',
         gameMode: gameStore.gameMode
       })
+      if (gameStore.started) {
+        handleGuestRecovered()
+      }
     }
   }
   function clientDisconnected() {
@@ -150,7 +154,72 @@ export const useRoomStore = defineStore('room', () => {
       case 'GameClientBackToLobbyMessage':
         gameStore.gameBoard = undefined
         gameStore.started = false
+        break
+      case 'GameClientHostRecoveryMessage':
+        if (localStorage.getItem('ultimate-tic-tac-toc--host-mode') === '2' && msg.board) {
+          gameStore.gameMode = msg.gameMode
+          randomNumberGenerator = new SeededRandom(msg.seed, msg.iteration)
+          gameStore.playerSymbol = msg.guestSymbol === 'o' ? 'x' : 'o' // opposite of host
+          gameStore.loadBoardFromRecovery(msg.board, msg.lastPlayedIndex)
+          gameStore.started = true
+          id.value = msg.roomId
+        }
+        break
+      case 'GameClientGuestRecoveryMessage':
+        gameStore.gameMode = msg.gameMode
+        randomNumberGenerator = new SeededRandom(msg.seed, msg.iteration)
+        gameStore.playerSymbol = msg.guestSymbol === 'o' ? 'x' : 'o' // opposite of host
+        gameStore.loadBoardFromRecovery(msg.board, msg.lastPlayedIndex)
+        gameStore.started = true
+        id.value = msg.roomId
+        break
     }
+  }
+
+  function handleHostRecovered() {
+    tryToRecoverHost.value = false
+    client.send({
+      type: 'GameClientHostRecoveryMessage',
+      gameMode: gameStore.gameMode,
+      seed: randomNumberGenerator?.seed || '',
+      iteration: randomNumberGenerator?.iteration || 0,
+      board: gameStore.gameBoard as Board,
+      guestSymbol: gameStore.playerSymbol,
+      lastPlayedIndex: gameStore.lastPlayedIndex,
+      roomId: id.value || client.id
+    })
+  }
+
+  function handleGuestRecovered() {
+    client.send({
+      type: 'GameClientGuestRecoveryMessage',
+      gameMode: gameStore.gameMode,
+      seed: randomNumberGenerator?.seed || '',
+      iteration: randomNumberGenerator?.iteration || 0,
+      board: gameStore.gameBoard as Board,
+      guestSymbol: gameStore.playerSymbol,
+      lastPlayedIndex: gameStore.lastPlayedIndex,
+      roomId: id.value || client.id
+    })
+  }
+
+  function handleHostRecoveryMode() {
+    tryToRecoverHost.value = true
+    const f = () => {
+      if (!id.value || !tryToRecoverHost.value) return
+      function a() {
+        client.removeListener('game-joined', b)
+        if (tryToRecoverHost.value) setTimeout(() => f(), 3000)
+      }
+      function b() {
+        client.removeListener('failed-to-join', a)
+        handleHostRecovered()
+      }
+      client.once('failed-to-join', a)
+      client.once('game-joined', b)
+      client.join(id.value)
+    }
+    setTimeout(() => f(), 3000)
   }
 
   /**
@@ -162,6 +231,7 @@ export const useRoomStore = defineStore('room', () => {
     client.addListener('game-joined', clientConnected)
     client.addListener('game-left', clientDisconnected)
     client.addListener('data', messageReceived)
+    client.addListener('host-recovery-mode', handleHostRecoveryMode)
   }
 
   /**
@@ -173,6 +243,7 @@ export const useRoomStore = defineStore('room', () => {
     client.removeListener('game-joined', clientConnected)
     client.removeListener('game-left', clientDisconnected)
     client.removeListener('data', messageReceived)
+    client.removeListener('host-recovery-mode', handleHostRecoveryMode)
   }
 
   // Watch game changes and sync with client

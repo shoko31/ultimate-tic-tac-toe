@@ -23,4 +23,16 @@ const router = createRouter({
   ]
 })
 
+router.beforeEach((to, _, next) => {
+  if (to.name === RouteNames.HOME) {
+    const oldId = localStorage.getItem('ultimate-tic-tac-toc--uuid')
+    if (oldId !== null && oldId !== undefined) {
+      localStorage.clear()
+      location.reload()
+      return
+    }
+  }
+  next()
+})
+
 export default router

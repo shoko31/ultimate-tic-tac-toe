@@ -1,3 +1,4 @@
+import type { Board } from '@/stores'
 import EventEmitter from 'eventemitter3'
 import { type DataConnection, Peer, type PeerError, PeerErrorType } from 'peerjs'
 
@@ -16,6 +17,7 @@ export type GameClientEvents = {
   'game-joined': (gameId: string) => void
   'game-left': () => void
   'failed-to-join': () => void
+  'host-recovery-mode': () => void
   data: (msg: GameClientMessage) => void
 }
 
@@ -31,6 +33,8 @@ export class GameClient extends EventEmitter<GameClientEvents> {
    */
   private constructor(id?: string) {
     super()
+
+    console.log('ID', id)
 
     // Bind methods
     this.#processMessageBound = this.#processMessage.bind(this)
@@ -61,6 +65,7 @@ export class GameClient extends EventEmitter<GameClientEvents> {
       })
       connection.on('close', () => {
         this.#log('Connection closed!', connection.peer)
+        this.#dataConnection?.removeAllListeners()
         this.#dataConnection = undefined
         this.emit('game-left')
       })
@@ -127,6 +132,11 @@ export class GameClient extends EventEmitter<GameClientEvents> {
       this.emit('game-joined', dataConnection.peer)
     })
     dataConnection.on('data', this.#processMessageBound)
+    dataConnection.on('close', () => {
+      this.#log('dataConnection closed')
+      this.emit('host-recovery-mode')
+      this.#dataConnection = undefined
+    })
   }
 
   send(msg: GameClientMessage): void {
@@ -280,6 +290,8 @@ export type GameClientMessage =
   | GameClientChatMessage
   | GameClientPlayAtMessage
   | GameClientBackToLobbyMessage
+  | GameClientHostRecoveryMessage
+  | GameClientGuestRecoveryMessage
 
 export function isGameClientMessage(o: any): o is GameClientMessage {
   if (typeof o !== 'object') return false
@@ -290,7 +302,9 @@ export function isGameClientMessage(o: any): o is GameClientMessage {
     'GameClientStartGameMessage',
     'GameClientChatMessage',
     'GameClientPlayAtMessage',
-    'GameClientBackToLobbyMessage'
+    'GameClientBackToLobbyMessage',
+    'GameClientHostRecoveryMessage',
+    'GameClientGuestRecoveryMessage'
   ].includes(o.type)
 }
 
@@ -320,4 +334,26 @@ export type GameClientPlayAtMessage = {
 
 export type GameClientBackToLobbyMessage = {
   type: 'GameClientBackToLobbyMessage'
+}
+
+export type GameClientHostRecoveryMessage = {
+  type: 'GameClientHostRecoveryMessage'
+  gameMode: GameClientGameMode
+  seed: string
+  iteration: number
+  board: Board
+  guestSymbol: 'o' | 'x'
+  lastPlayedIndex: number | undefined
+  roomId: string
+}
+
+export type GameClientGuestRecoveryMessage = {
+  type: 'GameClientGuestRecoveryMessage'
+  gameMode: GameClientGameMode
+  seed: string
+  iteration: number
+  board: Board
+  guestSymbol: 'o' | 'x'
+  lastPlayedIndex: number | undefined
+  roomId: string
 }
