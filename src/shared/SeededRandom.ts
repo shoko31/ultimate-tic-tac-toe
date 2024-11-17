@@ -69,6 +69,7 @@ export class SeededRandom {
   public next(min: number, max: number): number
   public next(a?: number, b?: number): number {
     const randomNumber = this._generator()
+    this._iteration++
     if (a !== undefined && b !== undefined) {
       const max = Math.max(a, b)
       const min = Math.min(a, b)
