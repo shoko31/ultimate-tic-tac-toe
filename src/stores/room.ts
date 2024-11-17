@@ -122,7 +122,9 @@ export const useRoomStore = defineStore('room', () => {
         gameMode: gameStore.gameMode
       })
       if (gameStore.started) {
-        handleGuestRecovered()
+        setTimeout(() => {
+          handleGuestRecovered()
+        }, 500)
       }
     }
   }
